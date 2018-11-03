@@ -57,9 +57,13 @@ const initializeContractState = amt => {
 const runRemoteInterpreterAsync = async data => {
   logVerbose(logLabel, "Running Remote Interpreter");
 
+  let initParams = JSON.parse(fs.readFileSync(data.init, "utf-8"));
+  let creationBlock = { vname: "_creation_block", type: "BNum", value: "1" };
+  initParams.push(creationBlock);
+
   const reqData = {
     code: fs.readFileSync(data.code, "utf-8"),
-    init: fs.readFileSync(data.init, "utf-8"),
+    init: JSON.stringify(initParams),
     blockchain: fs.readFileSync(data.blockchain, "utf-8"),
     gaslimit: data.gas,
   };
@@ -134,8 +138,9 @@ module.exports = {
       logVerbose(logLabel, "Code Deployment");
       // initialized with standard message template
       isCodeDeployment = true;
-      cmd = `${config.scilla.runnerPath} -iblockchain ${blockchainPath} -o ${outputPath} -init ${initPath} -i ${codePath} -gaslimit ${gasLimit} -libdir ${
-        config.scilla.localLibDir}`;
+      cmd = `${config.scilla
+        .runnerPath} -iblockchain ${blockchainPath} -o ${outputPath} -init ${initPath} -i ${codePath} -gaslimit ${gasLimit} -libdir ${config
+        .scilla.localLibDir}`;
 
       // get init data from payload
       const initParams = JSON.stringify(payload.data);
@@ -143,8 +148,8 @@ module.exports = {
       fs.writeFileSync(initPath, cleanedParams);
 
       const rawCode = JSON.stringify(payload.code);
-      const cleanedCode = codeCleanup(rawCode);
-      fs.writeFileSync(codePath, cleanedCode);
+      // const cleanedCode = codeCleanup(rawCode);
+      fs.writeFileSync(codePath, payload.code);
     } else {
       // Invoke transition
       logVerbose(logLabel, `Calling transition within contract ${payload.to}`);
